@@ -1,5 +1,5 @@
-{
-    "0.3.0":{
+[
+    {
         "tag_name": "v0.3.0",
         "name": "Version 0.3.0 – Initial project structure (pre-release)",
         "node":{
@@ -15,4 +15,4 @@
         },
         "tizonaclient":["0.3.0"]
         }
-}
+]
