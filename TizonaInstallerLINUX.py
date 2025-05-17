@@ -60,46 +60,7 @@ MAIN EXECUTION
 print('\033[32mWelcome to TizonaHub installer\033[0m')
 
 pkgmgr = detectPackageManager()
-import requests
-
-def get_tizonaserver_releases():
-    url = "https://api.github.com/repos/tizonahub/tizonaserver/releases"
-    response = requests.get(url)
-    if response.status_code == 200:
-        releases = response.json()
-        return releases
-        
-    else:
-        print(f"Error al obtener releases: {response.status_code}")
-
-releases=get_tizonaserver_releases()
-selectedRelease=False
-
-while selectedRelease is False:
-    index=0
-    print('Select one release by its index')
-    for release in releases:
-        print(f"[{index}] --> {release['name']}")
-        index=index+1
-    try:
-        inputData=int(input())
-        releases[inputData]
-        selectedRelease=inputData
-    except:
-        None
-print(f'selected release: {releases[selectedRelease]['name']}')
-requirementsAsset=''
-for asset in releases[selectedRelease]['assets']:
-    if asset['name']=='requirements.json': requirementsAsset = asset
-
-response = requests.get(requirementsAsset['browser_download_url'])
-requirements=None
-if response.status_code == 200:
-    requirements = response.json()
-    print('requirements: ', requirements)
-
-
-'''if not pkgmgr:
+if not pkgmgr:
     print('\033[31mYour Linux distribution is not supported automatically.\033[0m')
     exit(1)
 
@@ -165,4 +126,3 @@ with open(env_path, 'w') as envFile:
 os.rename('TizonaServer/.env.example', 'TizonaServer/.env')
 print('\033[32m.env file generated\033[0m')
 print('\033[32mTizonaHub was installed successfully\033[0m')
-'''
