@@ -27,8 +27,3 @@ These distributions share a common base (Debian), so this installer should work 
 ## License
 
 This installer is distributed under the MIT License. See [LICENSE](LICENSE) for details.
-
----
-
-*Happy deploying!*
-
