@@ -2,7 +2,6 @@ import subprocess
 import os
 import random
 from getpass import getpass
-import json
 
 def genRandomString():
     chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz<>1234567890¿?=)(%$·#@}{*,.:;-_'
