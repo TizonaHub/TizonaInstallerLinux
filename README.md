@@ -16,6 +16,7 @@ These distributions share a common base (Debian), so this installer should work 
 
 - A user with **sudo** privileges
 - Internet access to download packages and repositories
+- Python 3
 - Optional: Node.js and MySQL/MariaDB. If not installed, the installer can offer to install them for you.
 
 ## Usage
