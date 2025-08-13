@@ -18,6 +18,14 @@ These distributions share a common base (Debian), so this installer should work 
 - Internet access to download packages and repositories
 - Optional: Node.js and MySQL/MariaDB. If not installed, the installer can offer to install them for you.
 
+## Usage
+To run the installer, ensure that Python 3 is installed on your system.
+Download or clone the installer script, open a terminal in its directory, and execute:
+
+```bash
+python3 TizonaInstallerLINUX.py
+```
+
 ## Troubleshooting
 
 - **Unsupported distribution**: If the installer aborts due to an unsupported OS, consider adapting the script, running on a supported distro or installing manually TizonaHub.
