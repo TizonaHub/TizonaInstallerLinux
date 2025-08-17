@@ -184,7 +184,7 @@ def generateEnv(dbName,dbPassword,dbUser):
         "ORIGINS":"["+'"*"'+"]",
         "DB_HOST":'127.0.0.1',
         "DB_USER":dbUser,
-        "DB_PASSWORD":dbPassword,
+        "DB_USER_PASSWORD":dbPassword,
         "DB":dbName,
         "STATIC":"storage",
         "NODE_ENV":"production"
@@ -350,3 +350,4 @@ printYellow()
 printYellow("GRANT ALL PRIVILEGES ON *.* TO 'your_user'@'localhost';")
 printYellow()
 printYellow("FLUSH PRIVILEGES;")
+
