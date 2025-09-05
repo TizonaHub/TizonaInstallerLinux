@@ -337,7 +337,7 @@ if os.path.isfile('/opt/TizonaHubBundleLatest.zip'): os.remove('/opt/TizonaHubBu
 print()
 print('======')
 print('\033[32mTizonaHub was installed successfully!\033[0m')
-printGreen('To setup a new database, log into mysql shell using sudo mysql -u root -p ( password is empty by default installation ) and execute the following commands:')
+printGreen('To setup a new database, log into mysql shell using sudo mysql and execute the following commands:')
 printGreen()
 printYellow("CEATE DATABASE your_db_name:")
 printYellow()
@@ -350,4 +350,5 @@ printYellow()
 printYellow("GRANT ALL PRIVILEGES ON *.* TO 'your_user'@'localhost';")
 printYellow()
 printYellow("FLUSH PRIVILEGES;")
+
 
