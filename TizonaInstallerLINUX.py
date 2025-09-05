@@ -345,10 +345,11 @@ printYellow("USE your_db_name;")
 printYellow()
 printYellow("source /opt/TizonaHub/TizonaServer/SQL/setup.sql;")
 printYellow()
-printYellow("CREATE USER 'your_user'@'localhost' IDENTIFIED WITH mysql_native_password BY 'your_password';")
+printYellow("CREATE USER 'your_user'@'localhost' IDENTIFIED BY 'your_password';")
 printYellow()
 printYellow("GRANT ALL PRIVILEGES ON *.* TO 'your_user'@'localhost';")
 printYellow()
 printYellow("FLUSH PRIVILEGES;")
+
 
 
