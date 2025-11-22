@@ -316,7 +316,7 @@ if env_path:
     splitContent.update({
         'JWT_KEY': genRandomString(),
         'DB_USER': dbUser,
-        'DB_PASSWORD': dbPassword,
+        'DB_USER_PASSWORD': dbPassword,
         'DB': dbName,
         'ORIGINS': '["*"]'
     })
