@@ -13,7 +13,7 @@ nvm_env=r'''export NVM_DIR="$HOME/.nvm"
                 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" 
                 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"'''
 needNvm_env=False
-bundleURI='192.168.1.127:8000/downloads/bundles/tizonahub/latest'
+bundleURI='https://tizonahub.com/downloads/bundles/tizonahub/latest'
 bundlePath='/opt/TizonaHubBundleLatest.zip'
 asciiArt='''
   #############################%% 
@@ -216,7 +216,6 @@ if not pkgmgr:
     print('\033[31mYour Linux distribution is not supported automatically.\033[0m')
     exit(1)
 
-
 # MySQL
 MySQLVersion = check('mysql')
 if not MySQLVersion:
@@ -334,22 +333,66 @@ else:
 #Remove remaining files & dirs
 if os.path.isfile('/opt/TizonaHubBundleLatest.zip'): os.remove('/opt/TizonaHubBundleLatest.zip')
 
+#Handle service
+bin= os.path.expanduser('~/.local/bin')
+exePath=os.path.join(bin,'tizonahub')
+bashrc = os.path.expanduser("~/.bashrc")
+
+os.makedirs(bin, exist_ok=True)
+
+with open(exePath, "w", encoding="utf-8") as f:
+    f.write("""
+#!/bin/bash
+cd /opt
+python3 test.py "$@"
+""")
+with open("/opt/test.py", "w", encoding="utf-8") as f:
+    f.write("""
+import sys
+import os
+args = sys.argv
+startFile='/opt/TizonaHub/TizonaServer/start.js'
+
+if len(args)>1:
+    action=args[1].lower()
+    cmd=None
+    match(action):
+        case 'start':
+            cmd=f'pm2 start {startFile}'
+        case 'stop':
+            cmd=f'pm2 stop {startFile}'
+        case 'autostart':
+            cmd=f'pm2 startup {startFile}'
+        case 'restart':
+            cmd=f'pm2 reload {startFile} && pm2 save'
+    
+    os.system(cmd)
+""")
+    
+bashrcContent='export PATH="$HOME/.local/bin:$PATH"'
+with open(bashrc, "r", encoding="utf-8") as f:
+    content = f.read()
+    if bashrcContent not in content:
+        with open(bashrc, "a", encoding="utf-8") as f:
+            f.write(f'\n{bashrcContent}\n')    
+
+os.system(f'chmod +x {exePath}')
+
 print()
 print('======')
 print('\033[32mTizonaHub was installed successfully!\033[0m')
 printGreen('To setup a new database, log into mysql shell using sudo mysql and execute the following commands:')
-printGreen()
+print()
 printYellow("CEATE DATABASE your_db_name:")
-printYellow()
+print()
 printYellow("USE your_db_name;")
-printYellow()
+print()
 printYellow("source /opt/TizonaHub/TizonaServer/SQL/setup.sql;")
-printYellow()
+print()
 printYellow("CREATE USER 'your_user'@'localhost' IDENTIFIED BY 'your_password';")
-printYellow()
+print()
 printYellow("GRANT ALL PRIVILEGES ON *.* TO 'your_user'@'localhost';")
-printYellow()
+print()
 printYellow("FLUSH PRIVILEGES;")
-
 
 
