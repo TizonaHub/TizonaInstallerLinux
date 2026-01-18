@@ -597,7 +597,7 @@ if os.path.isfile('/opt/TizonaHubBundleLatest.zip'): os.remove('/opt/TizonaHubBu
 
 #Handle service
 bin= os.path.expanduser('~/.local/bin')
-exePath=os.path.join(bin,'TizonaHub')
+exePath=os.path.join(bin,'tizonahub')
 bashrc = os.path.expanduser("~/.bashrc")
 
 os.makedirs(bin, exist_ok=True)
@@ -650,4 +650,5 @@ if len(dbName)>0 and len(dbUser)>2:
     preparedQuery=f"CREATE DATABASE {dbName};USE {dbName};source /opt/TizonaHub/TizonaServer/SQL/setup.sql;CREATE USER '{dbUser}'@'localhost' IDENTIFIED BY '{dbPassword}';GRANT ALL PRIVILEGES ON *.* TO '{dbUser}'@'localhost';FLUSH PRIVILEGES;"
     inputVal=input()
     if inputVal.lower() == 's': print(preparedQuery)
+
 
