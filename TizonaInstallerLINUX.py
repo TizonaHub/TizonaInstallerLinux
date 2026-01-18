@@ -18,7 +18,7 @@ update=True if 'update' in args else False
 currentClientVersion='0.4.0'
 currentServerVersion='0.4.0'
 
-terminalScript="""
+terminalScript=r"""
 import sys
 import os
 import shutil
@@ -650,3 +650,4 @@ if len(dbName)>0 and len(dbUser)>2:
     preparedQuery=f"CREATE DATABASE {dbName};USE {dbName};source /opt/TizonaHub/TizonaServer/SQL/setup.sql;CREATE USER '{dbUser}'@'localhost' IDENTIFIED BY '{dbPassword}';GRANT ALL PRIVILEGES ON *.* TO '{dbUser}'@'localhost';FLUSH PRIVILEGES;"
     inputVal=input()
     if inputVal.lower() == 's': print(preparedQuery)
+
