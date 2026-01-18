@@ -10,7 +10,183 @@ import re
 import pickle
 import sys
 import locale
+import shutil
+import pickle
 
+args = sys.argv
+update=True if 'update' in args else False
+currentClientVersion='0.4.0'
+currentServerVersion='0.4.0'
+
+terminalScript="""
+import sys
+import os
+import shutil
+import json
+import locale
+import pickle
+import subprocess
+from zipfile import ZipFile
+import json
+
+args = sys.argv
+startFile = '/opt/TizonaHub/TizonaServer/start.js'
+
+# LANG
+eng = {
+    "uninstall_warning_1": "You are about to uninstall TizonaHub, press C to continue or Q to cancel",
+    "uninstall_warning_2": "Are you sure? You will have to manually remove the database and the user if you wish.",
+    "uninstall_warning_3": "Python, Node.js and MySQL will remain installed.",
+    "uninstall_press": "Press C to continue or Q to cancel",
+    "uninstall_done": "Uninstallation completed",
+    "up_to_date":'TizonaHub is up to date!'
+}
+esp = {
+    "uninstall_warning_1": "Estás a punto de desinstalar TizonaHub, pulsa C para continuar o Q para cancelar",
+    "uninstall_warning_2": "¿Estás seguro? Tendrás que eliminar manualmente la base de datos y el usuario si así lo deseas.",
+    "uninstall_warning_3": "También se quedará instalado Python, Node.js y MySQL.",
+    "uninstall_press": "Pulsa C para continuar o Q para cancelar",
+    "uninstall_done": "Desinstalación completada",
+    "up_to_date":'¡TizonaHub está actualizado!'
+}
+LANG = "en"
+sys_lang = locale.getlocale()[0] or ""
+if sys_lang.lower().startswith("es"):
+    LANG = "es"
+else:
+    LANG = "en"
+langs = {"en": eng, "es": esp}
+langData = langs[LANG]
+
+def msg(key):
+    return langData.get(key, "")
+#FUNCTIONS
+def version_to_tuple(v):  
+    if isinstance(v, set):
+        v = next(iter(v))
+    
+    if isinstance(v, (list, tuple)):
+        v = v[0]
+
+    return str(v)
+
+def printYellow(msg=''):
+    print(f'\033[33m{msg}\033[0m')
+
+def printRed(msg=''):
+    print(f'\033[31m{msg}\033[0m')
+
+def printGreen(msg=''):
+    print(f'\033[32m{msg}\033[0m')
+    
+def uninstall():
+    bin = os.path.expanduser('~/.local/bin')
+    exePath = os.path.join(bin, 'tizonahub')
+
+    if os.path.isdir('/opt/TizonaHub'):
+        shutil.rmtree('/opt/TizonaHub')
+
+    if os.path.isfile(exePath):
+        os.remove(exePath)
+
+    printGreen(msg("uninstall_done"))
+def readJSON(filePath):
+    with open(filePath, 'r') as file:
+        return json.load(file)
+    
+def getVersion():
+    datPath='/etc/TizonaHub/data.dat'
+    try:
+        with open(datPath, "rb") as f:
+            dataBinary = pickle.load(f)
+            data={}
+            for versions in dataBinary.split('\n'):
+                versionData=versions.split(':')
+                data[versionData[0]]=versionData[1]
+            clientVersion=data['clientVersion']
+            serverVersion=data['serverVersion']
+        return {'clientVersion':clientVersion,'serverVersion':serverVersion}
+        
+    except Exception as e:
+        print(e)
+
+def update():
+    os.makedirs('/opt/TizonaHub/thubtemp',exist_ok=True)
+    datPath='/etc/TizonaHub/data.dat'
+    clientVersion='0.0.0'
+    serverVersion='0.0.0'
+    if os.path.isfile(datPath):
+        try:
+                data=getVersion()
+                print(data)
+                clientVersion=data['clientVersion']
+                serverVersion=data['serverVersion']
+            
+        except Exception as e:
+            print(e)
+    zipName = subprocess.check_output([
+                "wget",
+                "-qO-",
+                "https://tizonahub.com/downloads/bundles/tizonahub/latest?data=true"
+            ]).decode().strip()
+    jsonData=json.loads(zipName)
+    latestServerVersion=version_to_tuple(jsonData['serverVersion'])
+    latestClientVersion=version_to_tuple(jsonData['clientVersion'])
+    serverVersion=version_to_tuple(serverVersion)
+    clientVersion=version_to_tuple(clientVersion)
+    if latestClientVersion > clientVersion or latestServerVersion > serverVersion:
+        name='latestBundle.zip'
+        dest=f'/opt/TizonaHub/thubtemp/'
+        os.system(f'wget https://tizonahub.com/downloads/installers/ubuntu/latest -O {dest+name}')
+        with ZipFile(dest+name,'r') as ref:
+            ref.extractall(dest)
+        if os.path.isfile('TizonaInstallerLINUX.py'):
+            os.system(f'python3 {'TizonaInstallerLINUX.py'} update')
+    else:printGreen(msg('up_to_date'))
+    
+    exit(1)
+#MAIN
+if len(args) > 1:
+    action = args[1].lower()
+
+    if action == 'uninstall':
+        printRed(msg("uninstall_warning_1"))
+        inputVal = input()
+
+        if inputVal.lower() == 'c':
+            printRed(msg("uninstall_warning_2"))
+            printRed(msg("uninstall_warning_3"))
+            printRed(msg("uninstall_press"))
+
+            inputVal = input()
+            if inputVal.lower() == 'c':
+                uninstall()
+                exit(1)
+
+        else:
+            exit(1)
+        
+
+    cmd = None
+    match(action):
+        case 'start':
+            cmd = f'pm2 start {startFile}'
+        case 'stop':
+            cmd = f'pm2 stop {startFile}'
+        case 'autostart':
+            cmd = f'pm2 startup {startFile}'
+        case 'restart':
+            cmd = f'pm2 reload {startFile} && pm2 save'
+        case 'update':
+            update()
+        case 'version': 
+            data=getVersion()
+            print(f'TizonaServer: {data['serverVersion']}\nTizonaClient: {data['clientVersion']}')
+            exit(1)
+
+    os.system(cmd) if cmd else None
+
+"""
 #LANG
 eng = {
     "welcome": "Welcome to TizonaHub installer",
@@ -77,9 +253,6 @@ langData = langs[LANG]
 
 installerVersion='0.4.0'
 
-nvm_env=r'''export NVM_DIR="$HOME/.nvm"
-                [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" 
-                [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"'''
 needNvm_env=False
 bundleURI='https://tizonahub.com/downloads/bundles/tizonahub/latest'
 bundlePath='/opt/TizonaHubBundleLatest.zip'
@@ -156,6 +329,18 @@ def detectPackageManager():
         return 'apt'
     else:
         return None
+
+def downloadAndInstall():
+    
+    printGreen(langData["downloading_bundle"])
+    
+    subprocess.run(
+        ['wget', bundleURI, '-O', bundlePath],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
+    printGreen(langData["unzipping_bundle"])
+    unzipRelease(bundlePath)
 
 def install(package):
     print(f'\033[34mInstalling {package}...\033[0m')
@@ -274,8 +459,6 @@ def setProgramData():
 
         app_data_dir = os.path.join("/etc/TizonaHub")
         os.makedirs(app_data_dir, exist_ok=True)
-
-        data_file = os.path.join(app_data_dir, "data.dat")
         clientJSON=False
         serverJSON=False
         try:
@@ -284,16 +467,11 @@ def setProgramData():
             if os.path.isfile(clientJSONPath): clientJSON=readJSON(clientJSONPath) 
             if os.path.isfile(serverJSONPath): serverJSON=readJSON(serverJSONPath)
         except Exception as e:
-            None
-
+            printRed(f'Error reading json: {e}')
         clientVersion=clientJSON['version'] if clientJSON else '0.0.0'
         serverVersion=serverJSON['version'] if serverJSON else '0.0.0'
-        data = {
-            "installerVersion": {installerVersion},
-            "clientVersion":    {clientVersion},
-            "serverVersion":    {serverVersion}
-            }
-        with open(data_file, "wb") as f:
+        data = f"clientVersion:{clientVersion}\nserverVersion:{serverVersion}"
+        with open("/etc/TizonaHub/data.dat", "wb") as f:
             pickle.dump(data, f)
 
 '''
@@ -340,20 +518,12 @@ if not NodeVersion:
     exit(1)
 
 # Install Tizona
-printGreen(langData["downloading_bundle"])
-
-subprocess.run(
-    ['wget', bundleURI, '-O', bundlePath],
-    stdout=subprocess.DEVNULL,
-    stderr=subprocess.DEVNULL
-)
-printGreen(langData["unzipping_bundle"])
-unzipRelease(bundlePath)
+if not update: downloadAndInstall()
 
 #Ask for data
-dbName = input(langData["db_name"])
-dbUser = input(langData["db_user"])
-dbPassword = getpass()
+dbName = input(langData["db_name"]) if not update else None
+dbUser = input(langData["db_user"]) if not update else None
+dbPassword = getpass() if not update else None
 
 requirements=getRequirements()
 print(langData["requirements"], requirements)
@@ -361,6 +531,7 @@ nodeReqs=requirements['node'].split(' ')
 pythonReqs=requirements['python'].split(' ')
 mysqlReqs=requirements['mysql'].split(' ')
 
+#COMPARING VERSIONS
 def comparingTask(depVer,depRequirements,depName, key):
     condition1=len(depRequirements) >=1 and not compareVersions(depVer,getVersion(depRequirements[0]),getOperator(depRequirements[0]))
     condition2=len(depRequirements) >=2 and not compareVersions(depVer,getVersion(depRequirements[1]),getOperator(depRequirements[1]))
@@ -377,7 +548,6 @@ def comparingTask(depVer,depRequirements,depName, key):
         printGreen(f"{langData[key]}{depRequirements[0]}, your current version: {depVer}")
         return
 
-#COMPARING VERSIONS
 comparingTask(NodeVersion,nodeReqs,'Node.js',"exp_node")
 comparingTask(MySQLVersion,mysqlReqs,'MySQL',"exp_mysql")
 comparingTask(check('python3'),pythonReqs,'Python',"exp_python")
@@ -390,45 +560,49 @@ else:
     printRed(langData["no_node_manual"])
     sleep(2)
 # .env setup
-env_path = "/opt/TizonaHub/TizonaServer/.env.example"
+env_path = "/opt/TizonaHub/TizonaServer/.env.example" if not update else "/opt/TizonaHub/TizonaServer/.env"
 if not os.path.isfile(env_path):
     if os.path.isfile("/opt/TizonaHub/TizonaServer/.env"):
         env_path="/opt/TizonaHub/TizonaServer/.env"
     else: env_path=None
 
-if env_path:
-    with open(env_path, "r") as envFile:
-        content = [line.strip() for line in envFile.readlines() if line.strip()]
-
-    splitContent = dict(line.split('=', 1) for line in content)
-    splitContent.update({
-        'JWT_KEY': genRandomString(),
-        'DB_USER': dbUser,
-        'DB_USER_PASSWORD': dbPassword,
-        'DB': dbName,
-        'ORIGINS': '["*"]'
-    })
-
-    with open(env_path, 'w') as envFile:
-        for key, value in splitContent.items():
-            envFile.write(f'{key}={value}\n')
-    os.rename(env_path, '/opt/TizonaHub/TizonaServer/.env')
-    printGreen(langData["env_generated"])
+if not update:generateEnv(dbName,dbPassword,dbUser)
+elif not env_path and update:
+    printRed('.env file was not found, please recover it or install TizonaHub again')
+    exit(1)
 else:
- generateEnv(dbName,dbPassword,dbUser)
+    
+    os.makedirs('/opt/tempthub', exist_ok=True)
+    shutil.copy(env_path,'/opt/tempthub/.env')
+    try:
+        with open('/opt/tempthub/.env','r',encoding='UTF-8') as f:
+            content = [line.strip() for line in f.readlines() if line.strip()]
+            splitContent = dict(line.split('=', 1) for line in content)
+            staticDir=f'/opt/TizonaHub/TizonaServer/{splitContent["STATIC"].strip('"').strip("'")}'
+            staticDirTemp=f'/opt/tempthub/{splitContent["STATIC"].strip('"').strip("'")}'
+            if os.path.isdir(staticDirTemp):shutil.rmtree(staticDirTemp)
+            os.replace(staticDir,staticDirTemp)
+            downloadAndInstall()
+            if os.path.isdir(staticDir): shutil.rmtree(staticDir)
+            os.replace('/opt/tempthub/.env',env_path)
+            os.replace(staticDirTemp,staticDir)
+            shutil.rmtree('/opt/tempthub')
+    except Exception as e:
+        printRed(f'Error updating: {e}')
+
 
 #Remove remaining files & dirs
 if os.path.isfile('/opt/TizonaHubBundleLatest.zip'): os.remove('/opt/TizonaHubBundleLatest.zip')
 
-setProgramData()
 
 #Handle service
 bin= os.path.expanduser('~/.local/bin')
-exePath=os.path.join(bin,'tizonahub')
+exePath=os.path.join(bin,'TizonaHub')
 bashrc = os.path.expanduser("~/.bashrc")
 
 os.makedirs(bin, exist_ok=True)
 os.makedirs('/opt/TizonaHub/Terminal/', exist_ok=True)
+os.makedirs('/etc/TizonaHub', exist_ok=True)
 
 with open(exePath, "w", encoding="utf-8") as f: #EXE
     f.write("""
@@ -437,98 +611,7 @@ cd /opt/TizonaHub/Terminal/
 python3 terminal.py "$@"
 """)
 with open("/opt/TizonaHub/Terminal/terminal.py", "w", encoding="utf-8") as f: #PYTHON
-    f.write("""
-import sys
-import os
-import shutil
-import json
-import locale
-
-args = sys.argv
-startFile = '/opt/TizonaHub/TizonaServer/start.js'
-
-# LANG
-eng = {
-    "uninstall_warning_1": "You are about to uninstall TizonaHub, press C to continue or Q to cancel",
-    "uninstall_warning_2": "Are you sure? You will have to manually remove the database and the user if you wish.",
-    "uninstall_warning_3": "Python, Node.js and MySQL will remain installed.",
-    "uninstall_press": "Press C to continue or Q to cancel",
-    "uninstall_done": "Uninstallation completed"
-}
-esp = {
-    "uninstall_warning_1": "Estás a punto de desinstalar TizonaHub, pulsa C para continuar o Q para cancelar",
-    "uninstall_warning_2": "¿Estás seguro? Tendrás que eliminar manualmente la base de datos y el usuario si así lo deseas.",
-    "uninstall_warning_3": "También se quedará instalado Python, Node.js y MySQL.",
-    "uninstall_press": "Pulsa C para continuar o Q para cancelar",
-    "uninstall_done": "Desinstalación completada"
-}
-LANG = "en"
-sys_lang = locale.getlocale()[0] or ""
-if sys_lang.lower().startswith("es"):
-    LANG = "es"
-else:
-    LANG = "en"
-langs = {"en": eng, "es": esp}
-langData = langs[LANG]
-
-def msg(key):
-    return langData.get(key, "")
-#FUNCTIONS
-def printYellow(msg=''):
-    print(f'\033[33m{msg}\033[0m')
-def printRed(msg=''):
-    print(f'\033[31m{msg}\033[0m')
-def printGreen(msg=''):
-    print(f'\033[32m{msg}\033[0m')
-def uninstall():
-    bin = os.path.expanduser('~/.local/bin')
-    exePath = os.path.join(bin, 'tizonahub')
-
-    if os.path.isdir('/opt/TizonaHub'):
-        shutil.rmtree('/opt/TizonaHub')
-
-    if os.path.isfile(exePath):
-        os.remove(exePath)
-
-    printGreen(msg("uninstall_done"))
-def readJSON(filePath):
-    with open(filePath, 'r') as file:
-        return json.load(file)
-#MAIN
-if len(args) > 1:
-    action = args[1].lower()
-
-    if action == 'uninstall':
-        printRed(msg("uninstall_warning_1"))
-        inputVal = input()
-
-        if inputVal.lower() == 'c':
-            printRed(msg("uninstall_warning_2"))
-            printRed(msg("uninstall_warning_3"))
-            printRed(msg("uninstall_press"))
-
-            inputVal = input()
-            if inputVal.lower() == 'c':
-                uninstall()
-                exit(1)
-
-        else:
-            exit(1)
-
-    cmd = None
-    match(action):
-        case 'start':
-            cmd = f'pm2 start {startFile}'
-        case 'stop':
-            cmd = f'pm2 stop {startFile}'
-        case 'autostart':
-            cmd = f'pm2 startup {startFile}'
-        case 'restart':
-            cmd = f'pm2 reload {startFile} && pm2 save'
-
-    os.system(cmd)
-
-""")
+    f.write(terminalScript)
     
 bashrcContent='export PATH="$HOME/.local/bin:$PATH"'
 with open(bashrc, "r", encoding="utf-8") as f: # MAKES EXE AVAILABLE ON TERMINAL
@@ -539,6 +622,12 @@ with open(bashrc, "r", encoding="utf-8") as f: # MAKES EXE AVAILABLE ON TERMINAL
 
 os.system(f'chmod +x {exePath}')
 
+
+setProgramData()
+
+if update: 
+    printGreen('TizonaHub is up to date!')
+    exit(1)
 print()
 print('======')
 printGreen(langData["installed_ok"])
@@ -556,7 +645,7 @@ printYellow("GRANT ALL PRIVILEGES ON *.* TO 'your_db_user'@'localhost';")
 print()
 printYellow("FLUSH PRIVILEGES;")
 
-if len(dbName)>2 and len(dbUser)>2:
+if len(dbName)>0 and len(dbUser)>2:
     printGreen(langData["press_s"])
     preparedQuery=f"CREATE DATABASE {dbName};USE {dbName};source /opt/TizonaHub/TizonaServer/SQL/setup.sql;CREATE USER '{dbUser}'@'localhost' IDENTIFIED BY '{dbPassword}';GRANT ALL PRIVILEGES ON *.* TO '{dbUser}'@'localhost';FLUSH PRIVILEGES;"
     inputVal=input()
