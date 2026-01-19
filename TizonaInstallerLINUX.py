@@ -95,14 +95,10 @@ def readJSON(filePath):
         return json.load(file)
     
 def getVersion():
-    datPath='/etc/TizonaHub/data.dat'
+    datPath='/etc/tizonahub/data.dat'
     try:
         with open(datPath, "rb") as f:
-            dataBinary = pickle.load(f)
-            data={}
-            for versions in dataBinary.split('\n'):
-                versionData=versions.split(':')
-                data[versionData[0]]=versionData[1]
+            data = pickle.load(f)
             clientVersion=data['clientVersion']
             serverVersion=data['serverVersion']
         return {'clientVersion':clientVersion,'serverVersion':serverVersion}
@@ -112,7 +108,7 @@ def getVersion():
 
 def update():
     os.makedirs('/opt/TizonaHub/thubtemp',exist_ok=True)
-    datPath='/etc/TizonaHub/data.dat'
+    datPath='/etc/tizonahub/data.dat'
     clientVersion='0.0.0'
     serverVersion='0.0.0'
     if os.path.isfile(datPath):
@@ -187,6 +183,7 @@ if len(args) > 1:
     os.system(cmd) if cmd else None
 
 """
+
 #LANG
 eng = {
     "welcome": "Welcome to TizonaHub installer",
@@ -457,7 +454,7 @@ def installDependencies(cwd,cmd='npm install'):
 
 def setProgramData():
 
-        app_data_dir = os.path.join("/etc/TizonaHub")
+        app_data_dir = os.path.join("/etc/tizonahub")
         os.makedirs(app_data_dir, exist_ok=True)
         clientJSON=False
         serverJSON=False
@@ -470,9 +467,14 @@ def setProgramData():
             printRed(f'Error reading json: {e}')
         clientVersion=clientJSON['version'] if clientJSON else '0.0.0'
         serverVersion=serverJSON['version'] if serverJSON else '0.0.0'
-        data = f"clientVersion:{clientVersion}\nserverVersion:{serverVersion}"
-        with open("/etc/TizonaHub/data.dat", "wb") as f:
+        data = {
+            "clientVersion": clientVersion,
+            "serverVersion": serverVersion
+        }
+        
+        with open("/etc/tizonahub/data.dat", "wb") as f:
             pickle.dump(data, f)
+
 
 '''
 MAIN EXECUTION
@@ -597,12 +599,12 @@ if os.path.isfile('/opt/TizonaHubBundleLatest.zip'): os.remove('/opt/TizonaHubBu
 
 #Handle service
 bin= os.path.expanduser('~/.local/bin')
-exePath=os.path.join(bin,'TizonaHub')
+exePath=os.path.join(bin,'tizonahub')
 bashrc = os.path.expanduser("~/.bashrc")
 
 os.makedirs(bin, exist_ok=True)
 os.makedirs('/opt/TizonaHub/Terminal/', exist_ok=True)
-os.makedirs('/etc/TizonaHub', exist_ok=True)
+os.makedirs('/etc/tizonahub', exist_ok=True)
 
 with open(exePath, "w", encoding="utf-8") as f: #EXE
     f.write("""
