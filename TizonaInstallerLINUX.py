@@ -169,12 +169,12 @@ if len(args) > 1:
 
     cmd = None
     match(action):
-        case 'start':
-            cmd = f'pm2 start {startFile}'
+        case "start":
+            cmd = f'pm2 start {startFile} --name start --cwd {os.path.dirname(startFile)}'
         case 'stop':
             cmd = f'pm2 stop {startFile}'
-        case 'autostart':
-            cmd = f'pm2 startup {startFile}'
+        #case 'autostart':
+        #    cmd = f'pm2 startup'
         case 'restart':
             cmd = f'pm2 reload {startFile} && pm2 save'
         case 'update':
@@ -597,7 +597,7 @@ if os.path.isfile('/opt/TizonaHubBundleLatest.zip'): os.remove('/opt/TizonaHubBu
 
 #Handle service
 bin= os.path.expanduser('~/.local/bin')
-exePath=os.path.join(bin,'tizonahub')
+exePath=os.path.join(bin,'TizonaHub')
 bashrc = os.path.expanduser("~/.bashrc")
 
 os.makedirs(bin, exist_ok=True)
@@ -650,5 +650,3 @@ if len(dbName)>0 and len(dbUser)>2:
     preparedQuery=f"CREATE DATABASE {dbName};USE {dbName};source /opt/TizonaHub/TizonaServer/SQL/setup.sql;CREATE USER '{dbUser}'@'localhost' IDENTIFIED BY '{dbPassword}';GRANT ALL PRIVILEGES ON *.* TO '{dbUser}'@'localhost';FLUSH PRIVILEGES;"
     inputVal=input()
     if inputVal.lower() == 's': print(preparedQuery)
-
-
