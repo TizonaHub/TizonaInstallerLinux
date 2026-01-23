@@ -678,7 +678,7 @@ if len(dbName)>0 and len(dbUser)>0:
     if inputVal.lower()=='e': 
         dbName_safe = ident(dbName)
         dbUser_safe = ident(dbUser)
-        dbPassword_safe = esc_pwd("'x'; DROP DATABASE xD; --'")
+        dbPassword_safe = esc_pwd(dbPassword)
         preparedQuery = (
             f"CREATE DATABASE `{dbName_safe}`;"
             f"USE `{dbName_safe}`;"
