@@ -12,6 +12,7 @@ import sys
 import locale
 import shutil
 import pickle
+import re
 
 args = sys.argv
 update=True if 'update' in args else False
@@ -182,6 +183,10 @@ if len(args) > 1:
             data=getVersion()
             print(f'TizonaServer: {data['serverVersion']}\nTizonaClient: {data['clientVersion']}')
             exit(1)
+        case edit:
+            print('edit')
+            os.system('sudo nano /opt/TizonaHub/TizonaServer/.env')
+
 
     os.system(cmd) if cmd else None
 
@@ -211,7 +216,7 @@ eng = {
     "env_generated": ".env file generated",
     "installed_ok": "TizonaHub was installed successfully!",
     "setup_mysql": "To setup a new database, log into mysql shell using sudo mysql and execute the following commands:",
-    "press_s": "Press the S key to view prepared queries or Q to quit. Press Enter to confirm"
+    "press_s": "Press the S key to view prepared queries, E to prepare a .sql or Q to quit. Press Enter to confirm"
 }
 
 esp = {
@@ -237,7 +242,7 @@ esp = {
     "env_generated": "Archivo .env generado",
     "installed_ok": "¡TizonaHub se instaló correctamente!",
     "setup_mysql": "Para configurar una base de datos nueva, entra a MySQL con sudo mysql y ejecuta:",
-    "press_s": "Presiona la tecla S para ver las consultas preparadas o Q para salir. Pulsa Enter para confirmar"
+    "press_s": "Presiona la tecla S para ver las consultas preparadas, E para generar un script .sql o Q para salir. Pulsa Enter para confirmar"
 }
 
 LANG = "en"
@@ -308,6 +313,11 @@ def check(cmd):
     except:
         return False
 
+def validateSqlParam(param):
+    # Numbers, letters and _
+    if not re.match(r"^[A-Za-z0-9_]+$", param):
+        raise ValueError(f"Not valid sql param: {param}")
+    return param
 def checkNode():
     global needNvm_env
     try:
@@ -478,6 +488,15 @@ def setProgramData():
         with open("/etc/tizonahub/data.dat", "wb") as f:
             pickle.dump(data, f)
 
+def ident(x: str) -> str:
+    if not re.fullmatch(r"[A-Za-z0-9_]+", x or ""):
+        raise ValueError(f"Identifier not allowed: {x!r}")
+    return x
+
+def esc_pwd(p: str) -> str:
+    if p is None or "\x00" in p:
+        raise ValueError("Password not allowed")
+    return p.replace("'", "''")  #use with NO_BACKSLASH_ESCAPES
 
 '''
 MAIN EXECUTION
@@ -649,9 +668,25 @@ print()
 printYellow("GRANT ALL PRIVILEGES ON *.* TO 'your_db_user'@'localhost';")
 print()
 printYellow("FLUSH PRIVILEGES;")
-
-if len(dbName)>0 and len(dbUser)>2:
+if len(dbName)>0 and len(dbUser)>0:
     printGreen(langData["press_s"])
-    preparedQuery=f"CREATE DATABASE {dbName};USE {dbName};source /opt/TizonaHub/TizonaServer/SQL/setup.sql;CREATE USER '{dbUser}'@'localhost' IDENTIFIED BY '{dbPassword}';GRANT ALL PRIVILEGES ON *.* TO '{dbUser}'@'localhost';FLUSH PRIVILEGES;"
+    preparedQuery=f"CREATE DATABASE {dbName};USE {dbName};source /opt/TizonaHub/TizonaServer/SQL/setup.sql; \
+    CREATE USER IF NOT EXISTS'{dbUser}'@'localhost' IDENTIFIED BY '{dbPassword}'; \
+    GRANT ALL PRIVILEGES ON {dbName}.* TO '{dbUser}'@'localhost';FLUSH PRIVILEGES;"
     inputVal=input()
     if inputVal.lower() == 's': print(preparedQuery)
+    if inputVal.lower()=='e': 
+        dbName_safe = ident(dbName)
+        dbUser_safe = ident(dbUser)
+        dbPassword_safe = esc_pwd("'x'; DROP DATABASE xD; --'")
+        preparedQuery = (
+            f"CREATE DATABASE `{dbName_safe}`;"
+            f"USE `{dbName_safe}`;"
+            "SOURCE /opt/TizonaHub/TizonaServer/SQL/setup.sql;"
+            "SET SESSION sql_mode='NO_BACKSLASH_ESCAPES';"
+            f"CREATE USER IF NOT EXISTS '{dbUser_safe}'@'localhost' IDENTIFIED BY '{dbPassword_safe}';"
+            f"GRANT ALL PRIVILEGES ON `{dbName_safe}`.* TO '{dbUser_safe}'@'localhost';"
+            "FLUSH PRIVILEGES;"
+        )
+        subprocess.run(["sudo", "mysql", "-e", preparedQuery],check=True)
+
